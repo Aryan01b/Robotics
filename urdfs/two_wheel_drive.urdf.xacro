@@ -1,0 +1,403 @@
+<?xml version="1.0"?>
+<robot name="bot_description"
+    xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- ===== MATERIALS ===== -->
+    <material name="grey">
+        <color rgba="0.6 0.6 0.6 1"/>
+    </material>
+
+    <material name="black">
+        <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+
+    <!-- ===== INERTIA MACRO ===== -->
+    <xacro:macro name="inertia_box" params="mass x y z">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${mass}"/>
+            <inertia
+                ixx="${(1/12.0)*mass*(y*y + z*z)}"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="${(1/12.0)*mass*(x*x + z*z)}"
+                iyz="0.0"
+                izz="${(1/12.0)*mass*(x*x + y*y)}"/>
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="inertia_cylinder_x" params="mass radius length">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${0.5 * mass * radius * radius}"
+          ixy="0.0" ixz="0.0"
+          iyy="${1/12.0 * mass * (3 * radius * radius + length * length)}"
+          iyz="0.0"
+          izz="${1/12.0 * mass * (3 * radius * radius + length * length)}"/>
+      </inertial>
+    </xacro:macro>
+<!-- 
+    <xacro:macro name="inertia_cylinder_y" params="mass radius length">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${1/12.0 * mass * (3 * radius * radius + length * length)}"
+          ixy="0.0" ixz="0.0"
+          iyy="${0.5 * mass * radius * radius}"
+          iyz="0.0"
+          izz="${1/12.0 * mass * (3 * radius * radius + length * length)}"/>
+      </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="inertia_cylinder_z" params="mass radius length">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${1/12.0 * mass * (3 * radius * radius + length * length)}"
+          ixy="0.0" ixz="0.0"
+          iyy="${1/12.0 * mass * (3 * radius * radius + length * length)}"
+          iyz="0.0"
+          izz="${0.5 * mass * radius * radius}"/>
+      </inertial>
+    </xacro:macro> 
+-->
+
+    <xacro:macro name="inertia_sphere" params="mass radius">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${mass}"/>
+            <inertia
+                ixx="${(2/5.0)*mass*radius*radius}"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="${(2/5.0)*mass*radius*radius}"
+                iyz="0.0"
+                izz="${(2/5.0)*mass*radius*radius}"/>
+        </inertial>
+    </xacro:macro>
+
+
+    <!-- Dummy root for KDL compatibility -->
+    <link name="dummy_root"></link>
+
+    <joint name="dummy_root_joint" type="fixed">
+        <parent link="dummy_root"/>
+        <child link="base_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- ===== BASE LINK ===== -->
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="0.4 0.3 0.1"/>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.4 0.3 0.1"/>
+            </geometry>
+        </collision>
+        <xacro:inertia_box mass="2.0" x="0.4" y="0.3" z="0.1"/> 
+    </link>
+
+    <!-- ===== WHEELS ===== -->
+    <!-- Right Wheel -->
+    <link name="right_wheel">
+        <visual>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <!-- Rotate cylinder so the spin axis is X -->
+            <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        </collision>
+        <xacro:inertia_cylinder_x mass="0.2" radius="0.05" length="0.02"/>
+    </link>
+
+    <joint name="right_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="right_wheel"/>
+        <!-- Push wheel farther out -->
+        <origin xyz="0.1 -0.2 -0.05"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <!-- Left Wheel -->
+    <link name="left_wheel">
+        <visual>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        </collision>
+        <xacro:inertia_cylinder_x mass="0.2" radius="0.05" length="0.02"/>
+    </link>
+
+    <joint name="left_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="left_wheel"/>
+        <origin xyz="0.1 0.2 -0.05"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+
+    <!-- ===== CASTER WHEEL ===== -->
+    <link name="caster_wheel">
+        <visual>
+            <geometry>
+                <sphere radius="0.05"/>
+            </geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <sphere radius="0.05"/>
+            </geometry>
+        </collision>
+        <xacro:inertia_sphere mass="0.1" radius="0.05"/>
+    </link>
+
+    <joint name="caster_wheel_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="caster_wheel"/>
+        <origin xyz="-0.15 0 -0.05"/>
+    </joint>
+
+    <!-- ===== LIDAR ===== -->
+    <link name="lidar_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.02" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </collision>
+        <xacro:inertia_cylinder_x mass="0.1" radius="0.05" length="0.02"/>
+        </link>
+
+    <joint name="lidar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="lidar_link"/>
+        <origin xyz="0.0 0 0.1"/>
+    </joint>
+
+    <!-- ===== IMU ===== -->
+    <link name="imu_link">
+        <visual>
+            <geometry>
+                <box size="0.02 0.02 0.02"/>
+            </geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.02 0.02 0.02"/>
+            </geometry>
+        </collision>
+        <xacro:inertia_box mass="0.05" x="0.02" y="0.02" z="0.02"/>
+    </link>
+
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="0.0 0 0.05"/>
+    </joint>
+
+    <!-- ===== 3DOF ARM ===== -->
+
+    <!-- Arm Base -->
+    <link name="arm_base">
+        <visual>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <!-- Centered vertically -->
+            <origin xyz="-0.01 0 0.05"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <origin xyz="-0.01 0 0.05"/>
+        </collision>
+        <xacro:inertia_box mass="0.3" x="0.05" y="0.05" z="0.1"/>
+    </link>
+
+    <joint name="arm_base_joint" type="revolute">
+        <parent link="base_link"/>
+        <child link="arm_base"/>
+        <origin xyz="0.1 0 0.07"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="0" upper="1.5708" effort="10" velocity="1"/>
+    </joint>
+
+    <!-- Arm Link 1 -->
+    <link name="arm_link1">
+        <visual>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <origin xyz="-0.01 0 0.05"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <origin xyz="-0.01 0 0.05"/>
+        </collision>
+        <xacro:inertia_box mass="0.3" x="0.05" y="0.05" z="0.1"/>
+    </link>
+
+    <joint name="arm_link1_joint" type="revolute">
+        <parent link="arm_base"/>
+        <child link="arm_link1"/>
+        <!-- Connects to top of arm_base -->
+        <origin xyz="0 0 0.1"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="0" upper="1.5708" effort="10" velocity="1"/>
+    </joint>
+
+    <!-- Arm Link 2 -->
+    <link name="arm_link2">
+        <visual>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <origin xyz="-0.01 0 0.05"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.05 0.1"/>
+            </geometry>
+            <origin xyz="-0.01 0 0.05"/>
+        </collision>
+        <xacro:inertia_box mass="0.3" x="0.05" y="0.05" z="0.1"/>
+    </link>
+
+    <joint name="arm_link2_joint" type="revolute">
+        <parent link="arm_link1"/>
+        <child link="arm_link2"/>
+        <!-- Connects to top of arm_link1 -->
+        <origin xyz="0 0 0.1"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="0" upper="1.5708" effort="10" velocity="1"/>
+    </joint>
+
+    <!-- End Effector -->
+    <link name="arm_end_effector_right">
+        <visual>
+            <geometry>
+                <box size="0.05 0.025 0.05"/>
+            </geometry>
+            <origin xyz="-0.01 -0.05 0.025"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.025 0.05"/>
+            </geometry>
+            <origin xyz="-0.01 -0.05 0.025"/>
+        </collision>
+        <xacro:inertia_box mass="0.05" x="0.05" y="0.025" z="0.05"/>
+    </link>
+
+    <joint name="arm_end_effector_joint_right" type="prismatic">
+        <parent link="arm_link2"/>
+        <child link="arm_end_effector_right"/>
+        <origin xyz="0 0 0.1"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="0" upper="0.05" effort="10" velocity="1"/>
+    </joint>
+    
+    <link name="arm_end_effector_left">
+        <visual>
+            <geometry>
+                <box size="0.05 0.025 0.05"/>
+            </geometry>
+            <origin xyz="-0.01 0.03 0.025"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.025 0.05"/>
+            </geometry>
+            <origin xyz="-0.01 0.03 0.025"/>
+        </collision>
+        <xacro:inertia_box mass="0.05" x="0.05" y="0.025" z="0.05"/>
+    </link>
+
+    <joint name="arm_end_effector_joint_left" type="fixed">
+        <parent link="arm_link2"/>
+        <child link="arm_end_effector_left"/>
+        <origin xyz="0 0 0.1"/>
+    </joint>
+
+    <!-- ROS2 Control -->
+    <ros2_control name="GazeboArmController" type="system">
+        <hardware>
+            <plugin>gz_ros2_control/GzSystem</plugin>
+        </hardware>
+        <joint name="arm_base_joint">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+            <state_interface name="effort"/>
+        </joint>
+        <joint name="arm_link1_joint">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+            <state_interface name="effort"/>
+        </joint>
+        <joint name="arm_link2_joint">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+            <state_interface name="effort"/>
+        </joint>
+        <joint name="arm_end_effector_joint_right">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+            <state_interface name="effort"/>
+        </joint>
+    </ros2_control>
+
+    <!-- Plugins -->
+    <!-- <gazebo>
+        <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
+            <robotParam>robot_description</robotParam>
+            <paramFile>/home/swarn/ARYAN/Robotics/ROS2/a1_ros2_ws/install/bot_description/share/bot_description/config/ros2_controllers.yaml</paramFile>
+        </plugin>
+    </gazebo> -->
+
+
+</robot>

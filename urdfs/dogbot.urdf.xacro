@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+<robot name="quadruped_bot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Material definitions -->
+  <material name="Black">
+    <color rgba="0 0 0 1" />
+  </material>
+  <material name="Grey">
+    <color rgba="0.8 0.8 0.8 1" />
+  </material>
+  <material name="Orange">
+    <color rgba="1 0.4 0 1" />
+  </material>
+  <material name="White">
+    <color rgba="1 1 1 1" />
+  </material>
+  <material name="Blue">
+    <color rgba="0 0.2 0.6 1" />
+  </material>
+
+  <!-- Leg macro definition -->
+  <xacro:macro name="leg" params="prefix pos_x pos_y pos_z">
+    
+    <!-- Thigh link -->
+    <link name="${prefix}_thigh">
+      <collision>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <geometry>
+          <box size="0.05 0.05 0.17" />
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <geometry>
+          <box size="0.05 0.05 0.17" />
+        </geometry>
+        <material name="Grey" />
+      </visual>
+      <inertial>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <mass value="0.5" />
+        <inertia ixx="0.00375" ixy="0.0" ixz="0.0" 
+                 iyy="0.00375" iyz="0.0" izz="0.00083" />
+      </inertial>
+    </link>
+
+    <!-- Calf link -->
+    <link name="${prefix}_calf">
+      <collision>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <geometry>
+          <box size="0.05 0.05 0.15" />
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <geometry>
+          <box size="0.05 0.05 0.15" />
+        </geometry>
+        <material name="Blue" />
+      </visual>
+      <inertial>
+        <origin xyz="0 0 -0.1" rpy="0 0 0" />
+        <mass value="0.3" />
+        <inertia ixx="0.00225" ixy="0.0" ixz="0.0" 
+                 iyy="0.00225" iyz="0.0" izz="0.00048" />
+      </inertial>
+    </link>
+
+    <!-- Foot link -->
+    <link name="${prefix}_foot">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.03" />
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.03" />
+        </geometry>
+        <material name="Black" />
+      </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.1" />
+        <inertia ixx="0.00036" ixy="0.0" ixz="0.0" 
+                 iyy="0.00036" iyz="0.0" izz="0.00036" />
+      </inertial>
+    </link>
+
+    <!-- Hip joint (chassis to thigh) -->
+    <joint name="${prefix}_hip_joint" type="revolute">
+      <origin xyz="${pos_x} ${pos_y} ${pos_z}" rpy="0 0 0" />
+      <parent link="chassis" />
+      <child link="${prefix}_thigh" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="10" />
+      <dynamics damping="0.1" friction="0.1" />
+    </joint>
+
+    <!-- Knee joint (thigh to calf) -->
+    <joint name="${prefix}_knee_joint" type="revolute">
+      <origin xyz="0 0 -0.2" rpy="0 0 0" />
+      <parent link="${prefix}_thigh" />
+      <child link="${prefix}_calf" />
+      <axis xyz="0 1 0" />
+      <limit lower="-2.62" upper="0" effort="100" velocity="10" />
+      <dynamics damping="0.1" friction="0.1" />
+    </joint>
+
+    <!-- Ankle joint (calf to foot) -->
+    <joint name="${prefix}_ankle_joint" type="fixed">
+      <origin xyz="0 0 -0.2" rpy="0 0 0" />
+      <parent link="${prefix}_calf" />
+      <child link="${prefix}_foot" />
+    </joint>
+
+  </xacro:macro>
+
+  <!-- Base link -->
+  <link name="base_link" />
+
+  <!-- Main chassis/body -->
+  <link name="chassis">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.6 0.3 0.15" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.6 0.3 0.15" />
+      </geometry>
+      <material name="Orange" />
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="5.0" />
+      <inertia ixx="0.0562" ixy="0.0" ixz="0.0" 
+               iyy="0.225" iyz="0.0" izz="0.281" />
+    </inertial>
+  </link>
+
+  <!-- Fixed joint connecting base_link to chassis -->
+  <joint name="base_chassis_joint" type="fixed">
+    <origin xyz="0 0 0.4" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="chassis" />
+  </joint>
+
+  <!-- Instantiate 4 legs using the macro -->
+  <!-- Front Right leg -->
+  <xacro:leg prefix="fr" pos_x="0.25" pos_y="-0.2" pos_z="0.05" />
+  
+  <!-- Front Left leg -->
+  <xacro:leg prefix="fl" pos_x="0.25" pos_y="0.2" pos_z="0.05" />
+  
+  <!-- Rear Right leg -->
+  <xacro:leg prefix="rr" pos_x="-0.25" pos_y="-0.2" pos_z="0.05" />
+  
+  <!-- Rear Left leg -->
+  <xacro:leg prefix="rl" pos_x="-0.25" pos_y="0.2" pos_z="0.05" />
+
+</robot>
